@@ -1,14 +1,66 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'db'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ingestion'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pipeline'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'strategy'))
+
+from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 from connection import engine
 from models import BtcPrice, Indicator, FearGreed, Signal
 from sqlalchemy.orm import Session
 
-app = FastAPI()
+from btc_prices import fetch_btc_prices
+from fear_greed import fetch_fear_greed
+from indicators import calcular_indicadores
+from rules import gerar_sinais
+
+scheduler = AsyncIOScheduler()
+
+def executar_pipeline():
+    btc = fetch_btc_prices()
+    fg = fetch_fear_greed()
+    if btc > 0 or fg > 0:
+        calcular_indicadores()
+        gerar_sinais()
+    return btc, fg
+
+def job_diario():
+    print(f"[{datetime.now()}] Atualizando dados...")
+    btc, fg = executar_pipeline()
+
+    if btc == 0 or fg == 0:
+        print("Dados incompletos. Agendando retries...")
+        hoje = datetime.now()
+        for hora in [8, 12, 20]:
+            if datetime.now().hour < hora:
+                scheduler.add_job(
+                    job_retry,
+                    trigger=CronTrigger(hour=hora, minute=0),
+                    id=f"retry_{hora}",
+                    replace_existing=True,
+                    max_instances=1,
+                )
+
+def job_retry():
+    print(f"[{datetime.now()}] Retry de atualização...")
+    executar_pipeline()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(job_diario, CronTrigger(hour=0, minute=0), id="job_diario", replace_existing=True)
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+app = FastAPI(lifespan=lifespan)
 
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 
@@ -41,26 +93,14 @@ def signal_history(limit: int = 30):
     with Session(engine) as session:
         sinais = session.query(Signal).order_by(Signal.date.desc()).limit(limit).all()
 
-    return [
-        {
-            "data": str(s.date),
-            "sinal": s.signal_rule
-        }
-        for s in sinais
-    ]
+    return [{"data": str(s.date), "sinal": s.signal_rule} for s in sinais]
 
 @app.get("/api/price/history")
 def price_history(limit: int = 365):
     with Session(engine) as session:
         precos = session.query(BtcPrice).order_by(BtcPrice.date.desc()).limit(limit).all()
 
-    return [
-        {
-            "data": str(p.date),
-            "close": p.close
-        }
-        for p in reversed(precos)
-    ]
+    return [{"data": str(p.date), "close": p.close} for p in reversed(precos)]
 
 @app.get("/api/backtest")
 def backtest():
@@ -73,7 +113,6 @@ def backtest():
     preco_dict = {p.date: p.close for p in precos}
     sinal_dict = {s.date: s.signal_rule for s in sinais}
 
-    # DCA Puro
     btc_dca = 0
     investido_dca = 0
     ultimo_mes = None
@@ -85,7 +124,6 @@ def backtest():
         investido_dca += APORTE_MENSAL
         ultimo_mes = mes
 
-    # Regras com acúmulo
     btc_regras = 0
     investido_regras = 0
     saldo = 0

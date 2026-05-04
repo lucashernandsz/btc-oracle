@@ -6,34 +6,34 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'db'))
 from datetime import date
 from connection import engine
 from models import FearGreed
-from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
 
-def fetch_fear_greed():
-    url = "https://api.alternative.me/fng/?limit=0"
+def fetch_fear_greed() -> int:
+    try:
+        response = requests.get("https://api.alternative.me/fng/?limit=0", timeout=10)
+        response.raise_for_status()
+        entries = response.json()["data"]
+        if not entries:
+            return 0
 
-    response = requests.get(url)
-    data = response.json()
+        rows = [
+            {
+                "date": date.fromtimestamp(int(e["timestamp"])),
+                "value": float(e["value"]),
+                "classification": e["value_classification"],
+            }
+            for e in entries
+        ]
 
-    entries = data["data"]
+        with engine.begin() as conn:
+            stmt = insert(FearGreed).values(rows).on_conflict_do_nothing(index_elements=["date"])
+            result = conn.execute(stmt)
+            count = result.rowcount
+            print(f"{count} registros de fear/greed salvos.")
+            return count
+    except Exception as e:
+        print(f"Erro ao buscar fear/greed: {e}")
+        return 0
 
-    with Session(engine) as session:
-        count = 0
-        for entry in entries:
-            d = date.fromtimestamp(int(entry["timestamp"]))
-
-            exists = session.query(FearGreed).filter_by(date=d).first()
-            if exists:
-                continue
-
-            record = FearGreed(
-                date=d,
-                value=float(entry["value"]),
-                classification=entry["value_classification"]
-            )
-            session.add(record)
-            count += 1
-
-        session.commit()
-        print(f"{count} registros salvos no banco.")
-
-fetch_fear_greed()
+if __name__ == "__main__":
+    fetch_fear_greed()
