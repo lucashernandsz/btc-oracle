@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: btc-oracle-db
+    environment:
+      POSTGRES_USER: btcuser
+      POSTGRES_PASSWORD: btcpassword
+      POSTGRES_DB: btcoracle
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
