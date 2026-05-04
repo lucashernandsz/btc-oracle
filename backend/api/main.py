@@ -129,18 +129,18 @@ def backtest():
     aportes_regras = 0
     for data, preco in sorted(preco_dict.items()):
         mes = (data.year, data.month)
-        if mes == ultimo_mes:
-            continue
-        saldo += APORTE_MENSAL
-        ultimo_mes = mes
+        if mes != ultimo_mes:
+            saldo += APORTE_MENSAL
+            ultimo_mes = mes
         sinal = sinal_dict.get(data)
-        if sinal == "COMPRA FORTE":
+        if sinal == "COMPRA FORTE" and saldo > 0:
             btc_regras += saldo / preco
             investido_regras += saldo
             aportes_regras += 1
             saldo = 0
 
     preco_final = sorted(preco_dict.items())[-1][1]
+    total_aportado_regras = investido_regras + saldo
 
     return {
         "dca_puro": {
@@ -152,8 +152,9 @@ def backtest():
         "regras": {
             "aportes_realizados": aportes_regras,
             "total_investido": investido_regras,
+            "saldo_parado": round(saldo, 2),
             "btc_acumulado": round(btc_regras, 6),
             "valor_final": round(btc_regras * preco_final, 2),
-            "retorno_pct": round(((btc_regras * preco_final - investido_regras) / investido_regras) * 100, 1)
+            "retorno_pct": round(((btc_regras * preco_final - total_aportado_regras) / total_aportado_regras) * 100, 1) if total_aportado_regras > 0 else 0
         }
     }
