@@ -17,8 +17,8 @@ interface Props {
   backtest: Backtest | null;
 }
 
-function formatBRL(value: number) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+function formatUSD(value: number) {
+  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
 export default function BacktestPanel({ backtest }: Props) {
@@ -26,7 +26,7 @@ export default function BacktestPanel({ backtest }: Props) {
 
   return (
     <div>
-      <p className="section-title">Backtest — Comparativo de Estratégias (R$500/mês)</p>
+      <p className="section-title">Backtest — Comparativo de Estratégias ($500/mês)</p>
       <div className="backtest-grid">
         <div className="backtest-card">
           <div className="backtest-card-title">
@@ -35,7 +35,7 @@ export default function BacktestPanel({ backtest }: Props) {
           <div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Total investido</span>
-              <span className="backtest-metric-value">{formatBRL(backtest.dca_puro.total_investido)}</span>
+              <span className="backtest-metric-value">{formatUSD(backtest.dca_puro.total_investido)}</span>
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">BTC acumulado</span>
@@ -43,7 +43,7 @@ export default function BacktestPanel({ backtest }: Props) {
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Valor final</span>
-              <span className="backtest-metric-value">{formatBRL(backtest.dca_puro.valor_final)}</span>
+              <span className="backtest-metric-value">{formatUSD(backtest.dca_puro.valor_final)}</span>
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Retorno total</span>
@@ -59,7 +59,7 @@ export default function BacktestPanel({ backtest }: Props) {
           <div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Total investido</span>
-              <span className="backtest-metric-value">{formatBRL(backtest.regras.total_investido)}</span>
+              <span className="backtest-metric-value">{formatUSD(backtest.regras.total_investido)}</span>
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">BTC acumulado</span>
@@ -67,7 +67,7 @@ export default function BacktestPanel({ backtest }: Props) {
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Valor final</span>
-              <span className="backtest-metric-value">{formatBRL(backtest.regras.valor_final)}</span>
+              <span className="backtest-metric-value">{formatUSD(backtest.regras.valor_final)}</span>
             </div>
             <div className="backtest-metric">
               <span className="backtest-metric-label">Retorno total</span>
