@@ -22,6 +22,7 @@ def calcular_indicadores() -> int:
 
         df = pd.DataFrame([{"date": p.date, "close": p.close} for p in precos])
         df["mm200"] = df["close"].rolling(200).mean()
+        df["mm20"] = df["close"].rolling(20).mean()
         df["mayer_multiple"] = df["close"] / df["mm200"]
         df["rsi_14"] = calcular_rsi(df["close"])
         df["variacao_7d"] = df["close"].pct_change(7) * 100
@@ -31,6 +32,7 @@ def calcular_indicadores() -> int:
             {
                 "date": row["date"],
                 "mm200": row["mm200"],
+                "mm20": row["mm20"],
                 "mayer_multiple": row["mayer_multiple"],
                 "rsi_14": row["rsi_14"],
                 "variacao_7d": row["variacao_7d"],
@@ -41,7 +43,10 @@ def calcular_indicadores() -> int:
         ]
 
         with engine.begin() as conn:
-            stmt = insert(Indicator).values(rows).on_conflict_do_nothing(index_elements=["date"])
+            stmt = insert(Indicator).values(rows).on_conflict_do_update(
+                index_elements=["date"],
+                set_={"mm200": insert(Indicator).excluded.mm200, "mm20": insert(Indicator).excluded.mm20, "mayer_multiple": insert(Indicator).excluded.mayer_multiple, "rsi_14": insert(Indicator).excluded.rsi_14, "variacao_7d": insert(Indicator).excluded.variacao_7d, "variacao_30d": insert(Indicator).excluded.variacao_30d}
+            )
             result = conn.execute(stmt)
             count = result.rowcount
             print(f"{count} indicadores salvos.")

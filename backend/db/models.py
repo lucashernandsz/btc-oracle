@@ -31,6 +31,7 @@ class Indicator(Base):
     mayer_multiple = Column(Float)
     rsi_14 = Column(Float)
     mm200 = Column(Float)
+    mm20 = Column(Float)
     variacao_7d = Column(Float)
     variacao_30d = Column(Float)
 
