@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, Float, Integer, String
+from sqlalchemy import Column, Date, Float, Integer, String, DateTime
 from connection import Base
 
 
@@ -68,3 +68,15 @@ class BacktestResult(Base):
     retorno_acumulado = Column(Float)
     sharpe = Column(Float)
     max_drawdown = Column(Float)
+
+class ExchangeQuote(Base):
+    __tablename__= "exchange_quote"
+
+    id = Column(Integer, primary_key=True)
+    exchange = Column(String(100), nullable = False)
+    ask_brl = Column(Float, nullable = False)
+    bid_brl = Column(Float, nullable = False)
+    spread = Column(Float, nullable = False)
+    spread_pct = Column(Float, nullable = False)
+    taker_fee_pct = Column(Float, nullable = False)
+    datetime = Column(DateTime, nullable = False)
