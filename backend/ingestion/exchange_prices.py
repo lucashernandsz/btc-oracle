@@ -55,7 +55,7 @@ def fetch_nova_dax() -> dict | None:
 
 def fetch_binance() -> dict | None:
     try: 
-        response = requests.get("https://api.binance.com/api/v3/ticker/bookTicker?symbol=BTCBRL", timeout=10)
+        response = requests.get("https://data-api.binance.vision/api/v3/ticker/bookTicker?symbol=BTCBRL", timeout=10)
         response.raise_for_status()
         data = response.json()
 
