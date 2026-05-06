@@ -12,7 +12,7 @@ def aplicar_regras(mayer_multiple, fear_greed, close, mm20):
         return "COMPRA FORTE"
     elif fear_greed < 50 and close < mm20:
         return "COMPRA"
-    elif mayer_multiple < 1.2 and fear_greed < 40:
+    elif mayer_multiple < 1.2 and fear_greed < 50:
         return "COMPRA"
     elif mayer_multiple > 2.4 or fear_greed > 80:
         return "EVITAR"

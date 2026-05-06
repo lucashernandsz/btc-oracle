@@ -25,7 +25,7 @@ from rules import gerar_sinais
 from exchange_prices import fetch_all_exchanges
 from compare_exchanges import calc_comparacao
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone='America/Sao_Paulo')
 
 def executar_pipeline():
     btc = fetch_btc_prices()

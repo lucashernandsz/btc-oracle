@@ -1,5 +1,8 @@
 import requests
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+BRT = ZoneInfo('America/Sao_Paulo')
 
 def fill_exchange_info(exchange, ask, bid, taker_fee_pct) -> dict:
     ask = float(ask)
@@ -14,7 +17,7 @@ def fill_exchange_info(exchange, ask, bid, taker_fee_pct) -> dict:
         "spread" : spread,
         "spread_pct": spread_pct,
         "taker_fee_pct": taker_fee_pct,
-        "datetime" : datetime.now()
+        "datetime" : datetime.now(BRT).replace(tzinfo=None)
     }
 
     return result
